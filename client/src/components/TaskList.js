@@ -33,11 +33,13 @@ const TaskList = () => {
           fetchedTasks = [];
         }
 
+        console.log('Fetched tasks:', fetchedTasks);
+
         setTasks(fetchedTasks);
         setFilteredTasks(fetchedTasks);
 
-        // Extract unique interns
-        const uniqueInterns = [...new Set(fetchedTasks.map(task => task.intern.name))];
+        // Extract unique interns, using optional chaining and defaulting to 'Unknown' if no intern name exists
+        const uniqueInterns = [...new Set(fetchedTasks.map(task => task.intern?.name || 'Unknown'))];
         setInterns(uniqueInterns);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -52,7 +54,7 @@ const TaskList = () => {
   useEffect(() => {
     // Filter tasks based on selected filters
     const filtered = tasks.filter(task => {
-      const matchesIntern = selectedIntern ? task.intern.name === selectedIntern : true;
+      const matchesIntern = selectedIntern ? task.intern?.name === selectedIntern : true;
       const matchesPriority = selectedPriority ? task.priority === selectedPriority : true;
       const matchesDueDate = dueDateFrom && dueDateTo
         ? new Date(task.dueDate) >= new Date(dueDateFrom) && new Date(task.dueDate) <= new Date(dueDateTo)
@@ -120,8 +122,8 @@ const TaskList = () => {
               onChange={(e) => setSelectedIntern(e.target.value)}
             >
               <option value="">All Interns</option>
-              {interns.map(intern => (
-                <option key={intern} value={intern}>{intern}</option>
+              {interns.map((intern, index) => (
+                <option key={index} value={intern}>{intern}</option>
               ))}
             </Form.Control>
           </Form.Group>
@@ -135,14 +137,15 @@ const TaskList = () => {
               onChange={(e) => setSelectedPriority(e.target.value)}
             >
               <option value="">All Priorities</option>
-              <option value="Low">Low</option>
+              <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </Form.Control>
           </Form.Group>
         </Col>
         <Col md={4}>
-                 </Col>
+          {/* Date filters or other controls can be added here */}
+        </Col>
       </Row>
 
       <Table striped bordered hover>
@@ -158,7 +161,7 @@ const TaskList = () => {
         <tbody>
           {filteredTasks.map(task => (
             <tr key={task._id}>
-              <td>{task.intern.name || 'N/A'}</td>
+              <td>{task.intern?.name || 'N/A'}</td>
               <td>{task.taskDescription}</td>
               <td>{new Date(task.dueDate).toLocaleDateString()}</td>
               <td>{task.priority}</td>
