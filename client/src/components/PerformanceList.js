@@ -1,40 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { getPerformances, deletePerformance, updatePerformance } from '../services/api'; // Ensure these functions are correctly imported
-import { Table, Button, Modal, Form } from 'react-bootstrap';
-import { Container } from 'react-bootstrap';
+import { getPerformances, deletePerformance, updatePerformance, getInterns } from '../services/api'; // Ensure getInterns is defined
+import { Table, Button, Modal, Form, Container } from 'react-bootstrap';
 
 const PerformanceList = () => {
   const [performances, setPerformances] = useState([]);
   const [filteredPerformances, setFilteredPerformances] = useState([]);
   const [interns, setInterns] = useState([]);
-  const [selectedIntern, setSelectedIntern] = useState('');
+  const [selectedIntern, setSelectedIntern] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPerformance, setSelectedPerformance] = useState(null);
 
+  // Fetch performances and interns
   useEffect(() => {
-    const fetchPerformances = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getPerformances();
-        const data = response.data || [];
-        setPerformances(data);
-        setFilteredPerformances(data);
+        const performanceResponse = await getPerformances();
+        const internResponse = await getInterns();
 
-        // Extract unique interns, ensuring intern and intern.name are valid
-        const uniqueInterns = [...new Set(data.map(performance => performance.intern ? performance.intern.name : ''))];
-        setInterns(uniqueInterns.filter(name => name)); // Remove empty names
+        // Set performances and interns
+        setPerformances(performanceResponse.data);
+        setFilteredPerformances(performanceResponse.data);
+        setInterns(internResponse.data);
       } catch (error) {
-        console.error('Error fetching performances:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchPerformances();
+    fetchData();
   }, []);
 
+  // Filter performances based on selected intern
   useEffect(() => {
-    // Filter performances based on selected intern
     if (selectedIntern) {
-      setFilteredPerformances(performances.filter(performance => performance.intern && performance.intern.name === selectedIntern));
+      setFilteredPerformances(
+        performances.filter(performance => 
+          performance.intern && performance.intern._id === selectedIntern._id
+        )
+      );
     } else {
       setFilteredPerformances(performances);
     }
@@ -53,6 +56,7 @@ const PerformanceList = () => {
   const handleDeleteConfirm = async () => {
     try {
       await deletePerformance(selectedPerformance._id);
+      // Update state to remove deleted performance
       setPerformances(performances.filter(performance => performance._id !== selectedPerformance._id));
       setFilteredPerformances(filteredPerformances.filter(performance => performance._id !== selectedPerformance._id));
       setShowDeleteModal(false);
@@ -68,9 +72,8 @@ const PerformanceList = () => {
       setShowEditModal(false);
       // Refresh the performance list
       const response = await getPerformances();
-      const data = response.data || [];
-      setPerformances(data);
-      setFilteredPerformances(data);
+      setPerformances(response.data);
+      setFilteredPerformances(response.data);
     } catch (error) {
       console.error('Error updating performance:', error);
     }
@@ -93,12 +96,16 @@ const PerformanceList = () => {
         <Form.Label>Filter by Intern</Form.Label>
         <Form.Control
           as="select"
-          value={selectedIntern}
-          onChange={(e) => setSelectedIntern(e.target.value)}
+          value={selectedIntern ? selectedIntern._id : ''}
+          onChange={(e) => {
+            const selectedId = e.target.value;
+            const intern = interns.find(i => i._id === selectedId);
+            setSelectedIntern(intern || null);
+          }}
         >
           <option value="">All Interns</option>
-          {interns.map((intern, index) => (
-            <option key={index} value={intern}>{intern}</option>
+          {interns.map(intern => (
+            <option key={intern._id} value={intern._id}>{intern.name}</option>
           ))}
         </Form.Control>
       </Form.Group>
@@ -115,7 +122,7 @@ const PerformanceList = () => {
         <tbody>
           {filteredPerformances.map(performance => (
             <tr key={performance._id}>
-              <td>{performance.intern ? performance.intern.name : 'Unknown'}</td> {/* Handle null intern */}
+              <td>{performance.intern ? performance.intern.name : 'Unknown'}</td>
               <td>{new Date(performance.reviewDate).toLocaleDateString()}</td>
               <td>{performance.performance}</td>
               <td>
