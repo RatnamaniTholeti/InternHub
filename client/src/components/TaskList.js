@@ -9,8 +9,6 @@ const TaskList = () => {
   const [interns, setInterns] = useState([]);
   const [selectedIntern, setSelectedIntern] = useState('');
   const [selectedPriority, setSelectedPriority] = useState('');
-  const [dueDateFrom, setDueDateFrom] = useState('');
-  const [dueDateTo, setDueDateTo] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
