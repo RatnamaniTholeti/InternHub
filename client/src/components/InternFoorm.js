@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Container, Alert } from 'react-bootstrap';
 
-const InternForm = () => {
+const InternFoorm = () => {
   const [internData, setInternData] = useState({
     name: '',
     contactInfo: '',
@@ -18,6 +18,13 @@ const InternForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Simple validation to ensure all fields are filled
+    if (!internData.name || !internData.contactInfo || !internData.department || !internData.startDate || !internData.endDate) {
+      setError('All fields are required.');
+      return;
+    }
+
     try {
       const response = await fetch('https://internhub-server-final.vercel.app/api/interns', {
         method: 'POST',
@@ -26,10 +33,14 @@ const InternForm = () => {
         },
         body: JSON.stringify(internData),
       });
-      if (!response.ok) {
-        throw new Error('Failed to create intern');
-      }
+
       const result = await response.json();
+      console.log(result); // Log the response for debugging
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to create intern');
+      }
+
       setSuccess(`Intern ${result.name} created successfully!`);
       setInternData({
         name: '',
@@ -117,4 +128,4 @@ const InternForm = () => {
   );
 };
 
-export default InternForm;
+export default InternFoorm;
